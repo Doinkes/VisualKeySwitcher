@@ -1,5 +1,6 @@
 #include "tray.h"
 #include "layout.h"
+#include "config.h"
 #include <stdio.h>
 
 #define WM_TRAYICON (WM_USER + 1)
@@ -13,7 +14,6 @@ void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
         HMENU hMenu = CreatePopupMenu();
         HMENU hHotkeyMenu = CreatePopupMenu();
         
-        // Подменю для выбора хоткея
         AppendMenuA(hHotkeyMenu, MF_STRING, 10, "Ctrl + Shift");
         AppendMenuA(hHotkeyMenu, MF_STRING, 11, "Shift + Alt");
         
@@ -26,7 +26,6 @@ void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
         
         AppendMenuA(hMenu, MF_STRING, 1, "Visual Marker");
         AppendMenuA(hMenu, MF_STRING, 2, "Sound");
-        AppendMenuA(hMenu, MF_STRING, 3, "AutoStart");
         AppendMenuA(hMenu, MF_SEPARATOR, 0, NULL);
         AppendMenuA(hMenu, MF_POPUP, (UINT_PTR)hHotkeyMenu, "Set Hotkey");
         AppendMenuA(hMenu, MF_SEPARATOR, 0, NULL);
@@ -38,19 +37,6 @@ void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
         if (IsSoundEnabled()) {
             CheckMenuItem(hMenu, 2, MF_BYCOMMAND | MF_CHECKED);
         }
-        if (IsAutoStartEnabled()) {
-            CheckMenuItem(hMenu, 3, MF_BYCOMMAND | MF_CHECKED);
-        }
-        
-        char hotkeyText[50];
-        if (mods == (1 | 2)) {
-            strcpy(hotkeyText, "Hotkey: Ctrl+Shift");
-        } else if (mods == (2 | 4)) {
-            strcpy(hotkeyText, "Hotkey: Shift+Alt");
-        } else {
-            strcpy(hotkeyText, "Hotkey: Ctrl+Shift");
-        }
-        AppendMenuA(hMenu, MF_STRING | MF_DISABLED | MF_GRAYED, 0, hotkeyText);
         
         POINT pt;
         GetCursorPos(&pt);
@@ -67,22 +53,22 @@ void HandleTrayCommand(WPARAM wParam) {
     switch(LOWORD(wParam)) {
         case 1:
             ToggleVisualMarker();
+            SaveConfig();
             UpdateTrayMenu(hwndMain);
             break;
         case 2:
             ToggleSound();
-            UpdateTrayMenu(hwndMain);
-            break;
-        case 3:
-            ToggleAutoStart();
+            SaveConfig();
             UpdateTrayMenu(hwndMain);
             break;
         case 10:
             SetHotkey(1 | 2, 0);
+            SaveConfig();
             UpdateTrayMenu(hwndMain);
             break;
         case 11:
             SetHotkey(2 | 4, 0);
+            SaveConfig();
             UpdateTrayMenu(hwndMain);
             break;
         case 5:

@@ -24,17 +24,15 @@ LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             Rectangle(hdc, 0, 0, rect.right, rect.bottom);
             DeleteObject(whitePen);
             
-            // ============================================================
-            // …‡ ˆ‚…‘ˆˆ Ñ ïîêàçûâàåò ðåàëüíóþ ðàñêëàäêó
-            // ============================================================
+            // ÈÍÂÅÐÑÈß: RU -> EN, EN -> RU
             HKL layout = GetActiveWindowLayout();
             WORD langID = LOWORD(layout);
             char displayText[10];
             
             if (langID == 0x0419) {
-                sprintf(displayText, "RU");  // RU -> RU
+                sprintf(displayText, "RU");
             } else if (langID == 0x0409) {
-                sprintf(displayText, "EN");  // EN -> EN
+                sprintf(displayText, "EN");
             } else {
                 sprintf(displayText, "??");
             }

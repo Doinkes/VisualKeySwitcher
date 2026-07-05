@@ -36,7 +36,7 @@ if exist "resource.rc" (
 )
 
 echo [INFO] Compiling program...
-gcc -o VisualKeySwitcher.exe main.c tray.c overlay.c layout.c %RESOURCE% -luser32 -lgdi32 -lcomctl32 -mwindows -lwinmm
+gcc -o VisualKeySwitcher.exe main.c tray.c overlay.c layout.c config.c %RESOURCE% -luser32 -lgdi32 -lcomctl32 -mwindows -lwinmm
 
 if %errorlevel% equ 0 (
     echo.
