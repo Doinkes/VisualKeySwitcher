@@ -8,6 +8,47 @@ static NOTIFYICONDATA nid;
 static HINSTANCE hInstGlobal;
 static HWND hwndMain;
 
+// Функция для проверки автозагрузки
+static int IsAutoStartEnabled() {
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, 
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 
+        0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        
+        char value[MAX_PATH];
+        DWORD size = MAX_PATH;
+        DWORD type = REG_SZ;
+        
+        if (RegQueryValueExA(hKey, "VisualKeySwitcher", NULL, &type, (LPBYTE)value, &size) == ERROR_SUCCESS) {
+            RegCloseKey(hKey);
+            return 1;
+        }
+        RegCloseKey(hKey);
+    }
+    return 0;
+}
+
+// Функция для переключения автозагрузки
+static void ToggleAutoStart() {
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, 
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 
+        0, KEY_WRITE, &hKey) == ERROR_SUCCESS) {
+        
+        if (IsAutoStartEnabled()) {
+            // Удаляем из автозагрузки
+            RegDeleteValueA(hKey, "VisualKeySwitcher");
+        } else {
+            // Добавляем в автозагрузку
+            char exePath[MAX_PATH];
+            GetModuleFileNameA(NULL, exePath, MAX_PATH);
+            RegSetValueExA(hKey, "VisualKeySwitcher", 0, REG_SZ, (const BYTE*)exePath, strlen(exePath) + 1);
+        }
+        
+        RegCloseKey(hKey);
+    }
+}
+
 void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
     if (lParam == WM_RBUTTONDOWN) {
         HMENU hMenu = CreatePopupMenu();
@@ -25,6 +66,7 @@ void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
         
         AppendMenuA(hMenu, MF_STRING, 1, "Visual Marker");
         AppendMenuA(hMenu, MF_STRING, 2, "Sound");
+        AppendMenuA(hMenu, MF_STRING, 3, "Auto Start");
         AppendMenuA(hMenu, MF_SEPARATOR, 0, NULL);
         AppendMenuA(hMenu, MF_POPUP, (UINT_PTR)hHotkeyMenu, "Set Hotkey");
         AppendMenuA(hMenu, MF_SEPARATOR, 0, NULL);
@@ -35,6 +77,9 @@ void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
         }
         if (IsSoundEnabled()) {
             CheckMenuItem(hMenu, 2, MF_BYCOMMAND | MF_CHECKED);
+        }
+        if (IsAutoStartEnabled()) {
+            CheckMenuItem(hMenu, 3, MF_BYCOMMAND | MF_CHECKED);
         }
         
         POINT pt;
@@ -56,6 +101,10 @@ void HandleTrayCommand(WPARAM wParam) {
             break;
         case 2:
             ToggleSound();
+            UpdateTrayMenu(hwndMain);
+            break;
+        case 3:
+            ToggleAutoStart();
             UpdateTrayMenu(hwndMain);
             break;
         case 10:
