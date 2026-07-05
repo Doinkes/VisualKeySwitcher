@@ -1,6 +1,5 @@
 #include "tray.h"
 #include "layout.h"
-#include "config.h"
 #include <stdio.h>
 
 #define WM_TRAYICON (WM_USER + 1)
@@ -53,22 +52,18 @@ void HandleTrayCommand(WPARAM wParam) {
     switch(LOWORD(wParam)) {
         case 1:
             ToggleVisualMarker();
-            SaveConfig();
             UpdateTrayMenu(hwndMain);
             break;
         case 2:
             ToggleSound();
-            SaveConfig();
             UpdateTrayMenu(hwndMain);
             break;
         case 10:
             SetHotkey(1 | 2, 0);
-            SaveConfig();
             UpdateTrayMenu(hwndMain);
             break;
         case 11:
             SetHotkey(2 | 4, 0);
-            SaveConfig();
             UpdateTrayMenu(hwndMain);
             break;
         case 5:

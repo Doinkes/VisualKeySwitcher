@@ -18,6 +18,48 @@ static void GetFullPath(const char* filename, char* outPath) {
     strcat(outPath, filename);
 }
 
+// === Сохранение и загрузка из реестра ===
+
+static void SaveSettingsToRegistry() {
+    HKEY hKey;
+    if (RegCreateKeyExA(HKEY_CURRENT_USER, 
+        "Software\\VisualKeySwitcher", 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) == ERROR_SUCCESS) {
+        
+        RegSetValueExA(hKey, "VisualMarker", 0, REG_DWORD, (const BYTE*)&visualMarkerEnabled, sizeof(visualMarkerEnabled));
+        RegSetValueExA(hKey, "Sound", 0, REG_DWORD, (const BYTE*)&soundEnabled, sizeof(soundEnabled));
+        RegSetValueExA(hKey, "Hotkey", 0, REG_DWORD, (const BYTE*)&hotkeyModifiers, sizeof(hotkeyModifiers));
+        
+        RegCloseKey(hKey);
+    }
+}
+
+static void LoadSettingsFromRegistry() {
+    HKEY hKey;
+    DWORD dwType = REG_DWORD;
+    DWORD size = sizeof(DWORD);
+    DWORD value = 0;
+    
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, 
+        "Software\\VisualKeySwitcher", 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        
+        if (RegQueryValueExA(hKey, "VisualMarker", NULL, &dwType, (LPBYTE)&value, &size) == ERROR_SUCCESS) {
+            visualMarkerEnabled = value;
+        }
+        size = sizeof(DWORD);
+        if (RegQueryValueExA(hKey, "Sound", NULL, &dwType, (LPBYTE)&value, &size) == ERROR_SUCCESS) {
+            soundEnabled = value;
+        }
+        size = sizeof(DWORD);
+        if (RegQueryValueExA(hKey, "Hotkey", NULL, &dwType, (LPBYTE)&value, &size) == ERROR_SUCCESS) {
+            hotkeyModifiers = value;
+        }
+        
+        RegCloseKey(hKey);
+    }
+}
+
+// === Публичные функции ===
+
 void InitLayout(HINSTANCE hInst) {
     GetModuleFileNameA(NULL, exePath, MAX_PATH);
     strcpy(exeDir, exePath);
@@ -25,6 +67,9 @@ void InitLayout(HINSTANCE hInst) {
     if (lastSlash) {
         *lastSlash = '\0';
     }
+    
+    // Загружаем настройки из реестра
+    LoadSettingsFromRegistry();
 }
 
 HKL GetActiveWindowLayout() {
@@ -52,9 +97,9 @@ void PlayLayoutSound(HKL layout) {
     char wavPath[MAX_PATH];
     
     if (strcmp(lang, "RU") == 0) {
-        GetFullPath("ru.wav", wavPath);
-    } else if (strcmp(lang, "EN") == 0) {
         GetFullPath("en.wav", wavPath);
+    } else if (strcmp(lang, "EN") == 0) {
+        GetFullPath("ru.wav", wavPath);
     } else {
         return;
     }
@@ -76,10 +121,12 @@ int IsSoundEnabled() {
 
 void ToggleVisualMarker() {
     visualMarkerEnabled = !visualMarkerEnabled;
+    SaveSettingsToRegistry();
 }
 
 void ToggleSound() {
     soundEnabled = !soundEnabled;
+    SaveSettingsToRegistry();
 }
 
 int GetHotkeyModifiers() {
@@ -89,6 +136,7 @@ int GetHotkeyModifiers() {
 void SetHotkey(int modifiers, int keyCode) {
     hotkeyModifiers = modifiers;
     hotkeyKeyCode = keyCode;
+    SaveSettingsToRegistry();
 }
 
 int IsHotkeyPressed(int vkCode) {

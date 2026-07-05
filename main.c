@@ -60,7 +60,6 @@ LRESULT CALLBACK HookProc(int code, WPARAM wParam, LPARAM lParam) {
         if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
             KBDLLHOOKSTRUCT *k = (KBDLLHOOKSTRUCT*)lParam;
             
-            // Отслеживаем состояние модификаторов
             if (k->vkCode == VK_CONTROL || k->vkCode == 162 || k->vkCode == 163) {
                 ctrlPressed = 1;
             }
@@ -74,9 +73,6 @@ LRESULT CALLBACK HookProc(int code, WPARAM wParam, LPARAM lParam) {
             int currentMods = (ctrlPressed ? 1 : 0) | (shiftPressed ? 2 : 0) | (altPressed ? 4 : 0);
             int hotkeyMods = GetHotkeyModifiers();
             
-            // ============================================================
-            // Проверяем НАШ хоткей
-            // ============================================================
             if (currentMods == hotkeyMods) {
                 int isModifier = (k->vkCode == VK_CONTROL || k->vkCode == VK_SHIFT || k->vkCode == VK_MENU ||
                                   k->vkCode == 162 || k->vkCode == 163 || k->vkCode == 160 || 
@@ -92,24 +88,19 @@ LRESULT CALLBACK HookProc(int code, WPARAM wParam, LPARAM lParam) {
                         int totalMods = (ctrlPressed ? 1 : 0) + (shiftPressed ? 1 : 0) + (altPressed ? 1 : 0);
                         if (totalMods >= 2 && !hotkeyTriggered) {
                             hotkeyTriggered = 1;
-                            
-                            // Переключаем раскладку
                             SwitchLayout();
-                            
-                            // Блокируем событие, чтобы Alt не открывал меню
+                            if (hotkeyMods == (2 | 4)) {
+                                PostMessage(hwndMain, WM_USER + 2, 0, 0);
+                            }
                             return 1;
                         }
                     }
                 }
             }
             
-            // ============================================================
-            // Блокируем системные комбинации (Ctrl+Shift или Shift+Alt)
-            // если они НЕ совпадают с нашим хоткеем
-            // ============================================================
             int isSystemHotkey = 0;
-            if (ctrlPressed && shiftPressed && !altPressed) isSystemHotkey = 1;  // Ctrl+Shift
-            if (shiftPressed && altPressed && !ctrlPressed) isSystemHotkey = 1;   // Shift+Alt
+            if (ctrlPressed && shiftPressed && !altPressed) isSystemHotkey = 1;
+            if (shiftPressed && altPressed && !ctrlPressed) isSystemHotkey = 1;
             
             if (isSystemHotkey && currentMods != hotkeyMods) {
                 return 1;
@@ -154,6 +145,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_USER + 1:
             HandleTrayMessage(wParam, lParam);
             break;
+        
+        case WM_USER + 2: {
+            Sleep(10);
+            keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+            altPressed = 0;
+            hotkeyTriggered = 0;
+            break;
+        }
         
         case WM_COMMAND:
             HandleTrayCommand(wParam);
