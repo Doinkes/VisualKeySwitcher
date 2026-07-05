@@ -1,5 +1,6 @@
 #include "tray.h"
 #include "layout.h"
+#include <stdio.h>
 
 #define WM_TRAYICON (WM_USER + 1)
 
@@ -10,12 +11,26 @@ static HWND hwndMain;
 void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
     if (lParam == WM_RBUTTONDOWN) {
         HMENU hMenu = CreatePopupMenu();
+        HMENU hHotkeyMenu = CreatePopupMenu();
+        
+        // Подменю для выбора хоткея
+        AppendMenuA(hHotkeyMenu, MF_STRING, 10, "Ctrl + Shift");
+        AppendMenuA(hHotkeyMenu, MF_STRING, 11, "Shift + Alt");
+        
+        int mods = GetHotkeyModifiers();
+        if (mods == (1 | 2)) {
+            CheckMenuItem(hHotkeyMenu, 10, MF_BYCOMMAND | MF_CHECKED);
+        } else if (mods == (2 | 4)) {
+            CheckMenuItem(hHotkeyMenu, 11, MF_BYCOMMAND | MF_CHECKED);
+        }
         
         AppendMenuA(hMenu, MF_STRING, 1, "Visual Marker");
         AppendMenuA(hMenu, MF_STRING, 2, "Sound");
         AppendMenuA(hMenu, MF_STRING, 3, "AutoStart");
         AppendMenuA(hMenu, MF_SEPARATOR, 0, NULL);
-        AppendMenuA(hMenu, MF_STRING, 4, "Exit");
+        AppendMenuA(hMenu, MF_POPUP, (UINT_PTR)hHotkeyMenu, "Set Hotkey");
+        AppendMenuA(hMenu, MF_SEPARATOR, 0, NULL);
+        AppendMenuA(hMenu, MF_STRING, 5, "Exit");
         
         if (IsVisualMarkerEnabled()) {
             CheckMenuItem(hMenu, 1, MF_BYCOMMAND | MF_CHECKED);
@@ -27,11 +42,23 @@ void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
             CheckMenuItem(hMenu, 3, MF_BYCOMMAND | MF_CHECKED);
         }
         
+        char hotkeyText[50];
+        if (mods == (1 | 2)) {
+            strcpy(hotkeyText, "Hotkey: Ctrl+Shift");
+        } else if (mods == (2 | 4)) {
+            strcpy(hotkeyText, "Hotkey: Shift+Alt");
+        } else {
+            strcpy(hotkeyText, "Hotkey: Ctrl+Shift");
+        }
+        AppendMenuA(hMenu, MF_STRING | MF_DISABLED | MF_GRAYED, 0, hotkeyText);
+        
         POINT pt;
         GetCursorPos(&pt);
         SetForegroundWindow(hwndMain);
         TrackPopupMenu(hMenu, TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwndMain, NULL);
         PostMessage(hwndMain, WM_NULL, 0, 0);
+        
+        DestroyMenu(hHotkeyMenu);
         DestroyMenu(hMenu);
     }
 }
@@ -50,7 +77,15 @@ void HandleTrayCommand(WPARAM wParam) {
             ToggleAutoStart();
             UpdateTrayMenu(hwndMain);
             break;
-        case 4:
+        case 10:
+            SetHotkey(1 | 2, 0);
+            UpdateTrayMenu(hwndMain);
+            break;
+        case 11:
+            SetHotkey(2 | 4, 0);
+            UpdateTrayMenu(hwndMain);
+            break;
+        case 5:
             DestroyTray();
             DestroyWindow(hwndMain);
             PostQuitMessage(0);

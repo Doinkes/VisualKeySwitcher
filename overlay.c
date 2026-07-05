@@ -24,10 +24,20 @@ LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             Rectangle(hdc, 0, 0, rect.right, rect.bottom);
             DeleteObject(whitePen);
             
+            // ============================================================
+            // …‡ ˆ‚…‘ˆˆ Ñ ïîêàçûâàåò ðåàëüíóþ ðàñêëàäêó
+            // ============================================================
             HKL layout = GetActiveWindowLayout();
-            char* lang = GetInvertedLanguageName(layout);
+            WORD langID = LOWORD(layout);
             char displayText[10];
-            sprintf(displayText, "%s", lang);
+            
+            if (langID == 0x0419) {
+                sprintf(displayText, "RU");  // RU -> RU
+            } else if (langID == 0x0409) {
+                sprintf(displayText, "EN");  // EN -> EN
+            } else {
+                sprintf(displayText, "??");
+            }
             
             HFONT font = CreateFont(120, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
                 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
@@ -94,15 +104,16 @@ void ShowOverlay(HINSTANCE hInst) {
         SetLayeredWindowAttributes(hwndOverlay, 0, 255, LWA_ALPHA);
     }
     
+    if (timerRunning) {
+        KillTimer(hwndOverlay, 1);
+        timerRunning = 0;
+    }
+    
     ShowWindow(hwndOverlay, SW_SHOW);
     SetWindowPos(hwndOverlay, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
     InvalidateRect(hwndOverlay, NULL, TRUE);
     UpdateWindow(hwndOverlay);
     
-    if (timerRunning) {
-        KillTimer(hwndOverlay, 1);
-        timerRunning = 0;
-    }
     SetTimer(hwndOverlay, 1, 500, NULL);
     timerRunning = 1;
 }
@@ -110,5 +121,9 @@ void ShowOverlay(HINSTANCE hInst) {
 void HideOverlay() {
     if (hwndOverlay) {
         ShowWindow(hwndOverlay, SW_HIDE);
+        if (timerRunning) {
+            KillTimer(hwndOverlay, 1);
+            timerRunning = 0;
+        }
     }
 }

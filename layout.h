@@ -3,6 +3,8 @@
 
 #include <windows.h>
 
+void WriteLog(const char* message);
+
 void InitLayout(HINSTANCE hInst);
 HKL GetActiveWindowLayout();
 char* GetInvertedLanguageName(HKL hkl);
@@ -14,5 +16,9 @@ int IsAutoStartEnabled();
 void ToggleVisualMarker();
 void ToggleSound();
 void ToggleAutoStart();
+
+int GetHotkeyModifiers();
+void SetHotkey(int modifiers, int keyCode);
+int IsHotkeyPressed(int vkCode);
 
 #endif
