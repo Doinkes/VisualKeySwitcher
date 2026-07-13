@@ -5,6 +5,18 @@
 static HWND hwndOverlay = NULL;
 static int timerRunning = 0;
 
+// Функция для получения цвета в зависимости от раскладки
+COLORREF GetLayoutColor(HKL layout) {
+    WORD langID = LOWORD(layout);
+    // RU -> голубой, EN -> оранжевый
+    if (langID == 0x0419) {
+        return RGB(74, 144, 217);  // Голубой
+    } else if (langID == 0x0409) {
+        return RGB(255, 107, 53);  // Оранжевый
+    }
+    return RGB(255, 255, 255);     // Белый (по умолчанию)
+}
+
 LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch(msg) {
         case WM_PAINT: {
@@ -14,21 +26,25 @@ LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             RECT rect;
             GetClientRect(hwnd, &rect);
             
-            HBRUSH blackBrush = CreateSolidBrush(RGB(0, 0, 0));
-            FillRect(hdc, &rect, blackBrush);
-            DeleteObject(blackBrush);
+            // Получаем цвет в зависимости от раскладки
+            HKL layout = GetActiveWindowLayout();
+            COLORREF bgColor = GetLayoutColor(layout);
             
+            // Заливаем фон цветом
+            HBRUSH bgBrush = CreateSolidBrush(bgColor);
+            FillRect(hdc, &rect, bgBrush);
+            DeleteObject(bgBrush);
+            
+            // Рисуем белую рамку
             HPEN whitePen = CreatePen(PS_SOLID, 3, RGB(255, 255, 255));
             SelectObject(hdc, whitePen);
             SelectObject(hdc, GetStockObject(NULL_BRUSH));
             Rectangle(hdc, 0, 0, rect.right, rect.bottom);
             DeleteObject(whitePen);
             
-            // ИНВЕРСИЯ: RU -> EN, EN -> RU
-            HKL layout = GetActiveWindowLayout();
+            // Текст
             WORD langID = LOWORD(layout);
             char displayText[10];
-            
             if (langID == 0x0419) {
                 sprintf(displayText, "RU");
             } else if (langID == 0x0409) {
@@ -37,6 +53,7 @@ LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
                 sprintf(displayText, "??");
             }
             
+            // Белый жирный шрифт
             HFONT font = CreateFont(120, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
                 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                 DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Arial");
@@ -72,7 +89,7 @@ void ShowOverlay(HINSTANCE hInst) {
         WNDCLASSA wcOverlay = {0};
         wcOverlay.lpfnWndProc = OverlayWndProc;
         wcOverlay.hInstance = hInst;
-        wcOverlay.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+        wcOverlay.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);  // Будем рисовать сами
         wcOverlay.lpszClassName = "OverlayClass";
         wcOverlay.style = CS_HREDRAW | CS_VREDRAW;
         
@@ -82,10 +99,14 @@ void ShowOverlay(HINSTANCE hInst) {
         
         int screenWidth = GetSystemMetrics(SM_CXSCREEN);
         int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+        
+        // Размер прямоугольника
         int width = 200;
         int height = 200;
+        
+        // Позиция: по центру по горизонтали, 200px от низа
         int x = (screenWidth - width) / 2;
-        int y = (screenHeight - height) / 2;
+        int y = screenHeight - height - 80;  // 80px от низа (выше панели задач)
         
         hwndOverlay = CreateWindowA("OverlayClass", "",
             WS_POPUP | WS_VISIBLE,
