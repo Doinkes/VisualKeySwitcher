@@ -35,12 +35,10 @@ LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
                 COLORREF textColor = RGB(255, 255, 255);
                 int fontSize = 120;
                 
-                // Только заливка фона - БЕЗ РАМКИ
                 HBRUSH bgBrush = CreateSolidBrush(bgColor);
                 FillRect(hdc, &rect, bgBrush);
                 DeleteObject(bgBrush);
                 
-                // Текст
                 HFONT font = CreateFont(fontSize, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
                     DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                     DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Arial");
@@ -67,12 +65,10 @@ LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
                                    (langID == 0x0409) ? enColor : 
                                    RGB(255, 255, 255);
                 
-                // Только заливка фона - БЕЗ РАМКИ
                 HBRUSH bgBrush = CreateSolidBrush(bgColor);
                 FillRect(hdc, &rect, bgBrush);
                 DeleteObject(bgBrush);
                 
-                // Текст
                 HFONT font = CreateFont(fontSize, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
                     DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                     DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Arial");
@@ -95,18 +91,13 @@ LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
                 COLORREF enColor = RGB(74, 144, 217);    // Голубой для EN
                 // ------------------------------------
                 
-                // Выбор цвета фона
                 COLORREF bgColor = (langID == 0x0419) ? ruColor : 
                                    (langID == 0x0409) ? enColor : 
                                    RGB(255, 255, 255);
                 
-                // Заливка фона цветом на весь экран
                 HBRUSH bgBrush = CreateSolidBrush(bgColor);
                 FillRect(hdc, &rect, bgBrush);
                 DeleteObject(bgBrush);
-                
-                // ТЕКСТА НЕТ!
-                // РАМКИ НЕТ!
             }
             
             EndPaint(hwnd, &ps);
@@ -134,7 +125,13 @@ void ShowOverlay(HINSTANCE hInst) {
     
     int width, height, x, y;
     int bottomOffset = 80;
-    int margin = 100; // Отступ 100px от краёв экрана
+    
+    // ============================================================
+    // НАСТРОЙКИ ТОЛЬКО ДЛЯ 3-ГО СТИЛЯ (SQUARES)
+    // ============================================================
+    int margin = 40;           // Отступ 50px от левого и правого края
+    int squareHeight = 30;     // Высота полоски
+    // ============================================================
     
     if (visualType == 0) {
         // CLASSIC: 200x200 по центру
@@ -149,11 +146,13 @@ void ShowOverlay(HINSTANCE hInst) {
         x = (screenWidth - width) / 2;
         y = screenHeight - height - bottomOffset;
     } else {
-        // SQUARES: прямоугольник на весь экран с отступами 100px
-        width = screenWidth - (margin * 2);  // Ширина = экран - 200px
-        height = 50;                         // Высота - меняй под себя
+        // SQUARES: полоска на всю ширину с отступами 50px, в нижней половине экрана
+        width = screenWidth - (margin * 2);  // Ширина = экран - 100px
+        height = squareHeight;
         x = margin;
-        y = (screenHeight - height) / 2;      // По центру по вертикали
+        // Нижняя половина экрана: (screenHeight / 2) + (screenHeight / 4) - (height / 2)
+        // = середина нижней половины
+        y = (screenHeight / 2) + (screenHeight / 4) - (height / 2);
     }
     
     if (!hwndOverlay) {
