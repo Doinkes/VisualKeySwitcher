@@ -73,6 +73,7 @@ LRESULT CALLBACK HookProc(int code, WPARAM wParam, LPARAM lParam) {
             int currentMods = (ctrlPressed ? 1 : 0) | (shiftPressed ? 2 : 0) | (altPressed ? 4 : 0);
             int hotkeyMods = GetHotkeyModifiers();
             
+            // Проверяем, совпадает ли комбинация с выбранной в программе
             if (currentMods == hotkeyMods) {
                 int isModifier = (k->vkCode == VK_CONTROL || k->vkCode == VK_SHIFT || k->vkCode == VK_MENU ||
                                   k->vkCode == 162 || k->vkCode == 163 || k->vkCode == 160 || 
@@ -88,22 +89,17 @@ LRESULT CALLBACK HookProc(int code, WPARAM wParam, LPARAM lParam) {
                         int totalMods = (ctrlPressed ? 1 : 0) + (shiftPressed ? 1 : 0) + (altPressed ? 1 : 0);
                         if (totalMods >= 2 && !hotkeyTriggered) {
                             hotkeyTriggered = 1;
-                            SwitchLayout();
-                            if (hotkeyMods == (2 | 4)) {
-                                PostMessage(hwndMain, WM_USER + 2, 0, 0);
-                            }
-                            return 1;
+                            
+                            // Показываем уведомление (НЕ переключаем раскладку)
+                            HKL currentLayout = GetActiveWindowLayout();
+                            PlayLayoutSound(currentLayout);
+                            ShowOverlay(hInstGlobal);
+                            
+                            // НЕ БЛОКИРУЕМ — пусть система сама переключает
+                            // return 0;
                         }
                     }
                 }
-            }
-            
-            int isSystemHotkey = 0;
-            if (ctrlPressed && shiftPressed && !altPressed) isSystemHotkey = 1;
-            if (shiftPressed && altPressed && !ctrlPressed) isSystemHotkey = 1;
-            
-            if (isSystemHotkey && currentMods != hotkeyMods) {
-                return 1;
             }
         }
         
@@ -124,6 +120,7 @@ LRESULT CALLBACK HookProc(int code, WPARAM wParam, LPARAM lParam) {
         }
     }
     
+    // ВСЕГДА передаём дальше — НЕ БЛОКИРУЕМ
     return CallNextHookEx(keyboardHook, code, wParam, lParam);
 }
 
@@ -145,14 +142,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_USER + 1:
             HandleTrayMessage(wParam, lParam);
             break;
-        
-        case WM_USER + 2: {
-            Sleep(10);
-            keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
-            altPressed = 0;
-            hotkeyTriggered = 0;
-            break;
-        }
         
         case WM_COMMAND:
             HandleTrayCommand(wParam);

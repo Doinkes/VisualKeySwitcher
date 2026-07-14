@@ -18,8 +18,6 @@ static void GetFullPath(const char* filename, char* outPath) {
     strcat(outPath, filename);
 }
 
-// === Сохранение и загрузка из реестра ===
-
 static void SaveSettingsToRegistry() {
     HKEY hKey;
     if (RegCreateKeyExA(HKEY_CURRENT_USER, 
@@ -58,8 +56,6 @@ static void LoadSettingsFromRegistry() {
     }
 }
 
-// === Публичные функции ===
-
 void InitLayout(HINSTANCE hInst) {
     GetModuleFileNameA(NULL, exePath, MAX_PATH);
     strcpy(exeDir, exePath);
@@ -67,8 +63,6 @@ void InitLayout(HINSTANCE hInst) {
     if (lastSlash) {
         *lastSlash = '\0';
     }
-    
-    // Загружаем настройки из реестра
     LoadSettingsFromRegistry();
 }
 
@@ -97,9 +91,9 @@ void PlayLayoutSound(HKL layout) {
     char wavPath[MAX_PATH];
     
     if (strcmp(lang, "RU") == 0) {
-        GetFullPath("en.wav", wavPath);
-    } else if (strcmp(lang, "EN") == 0) {
         GetFullPath("ru.wav", wavPath);
+    } else if (strcmp(lang, "EN") == 0) {
+        GetFullPath("en.wav", wavPath);
     } else {
         return;
     }
