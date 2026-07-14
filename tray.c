@@ -28,12 +28,15 @@ void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
         // Подменю для выбора типа визуала
         AppendMenuA(hVisualTypeMenu, MF_STRING, 20, "Classic");
         AppendMenuA(hVisualTypeMenu, MF_STRING, 21, "Modern");
+        AppendMenuA(hVisualTypeMenu, MF_STRING, 22, "Squares");
         
         int visualType = GetVisualType();
         if (visualType == 0) {
             CheckMenuItem(hVisualTypeMenu, 20, MF_BYCOMMAND | MF_CHECKED);
-        } else {
+        } else if (visualType == 1) {
             CheckMenuItem(hVisualTypeMenu, 21, MF_BYCOMMAND | MF_CHECKED);
+        } else {
+            CheckMenuItem(hVisualTypeMenu, 22, MF_BYCOMMAND | MF_CHECKED);
         }
         
         // Основное меню
@@ -101,6 +104,10 @@ void HandleTrayCommand(WPARAM wParam) {
             break;
         case 21:
             SetVisualType(1);  // Modern
+            UpdateTrayMenu(hwndMain);
+            break;
+        case 22:
+            SetVisualType(2);  // Squares
             UpdateTrayMenu(hwndMain);
             break;
         case 5:
