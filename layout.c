@@ -6,6 +6,8 @@
 
 static int visualMarkerEnabled = 1;
 static int soundEnabled = 1;
+static int autoStartEnabled = 0;
+static int visualType = 1; // 0 = Classic (центр, чёрный), 1 = Modern (внизу, цветной)
 static char exeDir[MAX_PATH];
 static char exePath[MAX_PATH];
 
@@ -18,6 +20,52 @@ static void GetFullPath(const char* filename, char* outPath) {
     strcat(outPath, filename);
 }
 
+static int IsAutoStartEnabledInternal() {
+    HKEY hKey;
+    DWORD dwType = REG_SZ;
+    char value[1024];
+    DWORD size = sizeof(value);
+    
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, 
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 
+        0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        
+        if (RegQueryValueExA(hKey, "VisualKeySwitcher", NULL, &dwType, (LPBYTE)value, &size) == ERROR_SUCCESS) {
+            RegCloseKey(hKey);
+            return 1;
+        }
+        RegCloseKey(hKey);
+    }
+    return 0;
+}
+
+static void EnableAutoStartInternal() {
+    char regValue[MAX_PATH + 20];
+    sprintf(regValue, "\"%s\"", exePath);
+    
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, 
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 
+        0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+        
+        RegSetValueExA(hKey, "VisualKeySwitcher", 0, REG_SZ, (const BYTE*)regValue, strlen(regValue) + 1);
+        RegCloseKey(hKey);
+        autoStartEnabled = 1;
+    }
+}
+
+static void DisableAutoStartInternal() {
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, 
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 
+        0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+        
+        RegDeleteValueA(hKey, "VisualKeySwitcher");
+        RegCloseKey(hKey);
+        autoStartEnabled = 0;
+    }
+}
+
 static void SaveSettingsToRegistry() {
     HKEY hKey;
     if (RegCreateKeyExA(HKEY_CURRENT_USER, 
@@ -26,6 +74,7 @@ static void SaveSettingsToRegistry() {
         RegSetValueExA(hKey, "VisualMarker", 0, REG_DWORD, (const BYTE*)&visualMarkerEnabled, sizeof(visualMarkerEnabled));
         RegSetValueExA(hKey, "Sound", 0, REG_DWORD, (const BYTE*)&soundEnabled, sizeof(soundEnabled));
         RegSetValueExA(hKey, "Hotkey", 0, REG_DWORD, (const BYTE*)&hotkeyModifiers, sizeof(hotkeyModifiers));
+        RegSetValueExA(hKey, "VisualType", 0, REG_DWORD, (const BYTE*)&visualType, sizeof(visualType));
         
         RegCloseKey(hKey);
     }
@@ -51,6 +100,10 @@ static void LoadSettingsFromRegistry() {
         if (RegQueryValueExA(hKey, "Hotkey", NULL, &dwType, (LPBYTE)&value, &size) == ERROR_SUCCESS) {
             hotkeyModifiers = value;
         }
+        size = sizeof(DWORD);
+        if (RegQueryValueExA(hKey, "VisualType", NULL, &dwType, (LPBYTE)&value, &size) == ERROR_SUCCESS) {
+            visualType = value;
+        }
         
         RegCloseKey(hKey);
     }
@@ -63,6 +116,7 @@ void InitLayout(HINSTANCE hInst) {
     if (lastSlash) {
         *lastSlash = '\0';
     }
+    autoStartEnabled = IsAutoStartEnabledInternal();
     LoadSettingsFromRegistry();
 }
 
@@ -113,6 +167,10 @@ int IsSoundEnabled() {
     return soundEnabled;
 }
 
+int IsAutoStartEnabled() {
+    return autoStartEnabled;
+}
+
 void ToggleVisualMarker() {
     visualMarkerEnabled = !visualMarkerEnabled;
     SaveSettingsToRegistry();
@@ -120,6 +178,16 @@ void ToggleVisualMarker() {
 
 void ToggleSound() {
     soundEnabled = !soundEnabled;
+    SaveSettingsToRegistry();
+}
+
+void ToggleAutoStart() {
+    if (autoStartEnabled) {
+        DisableAutoStartInternal();
+    } else {
+        EnableAutoStartInternal();
+    }
+    autoStartEnabled = IsAutoStartEnabledInternal();
     SaveSettingsToRegistry();
 }
 
@@ -145,4 +213,14 @@ int IsHotkeyPressed(int vkCode) {
     }
     
     return currentMods == hotkeyModifiers;
+}
+
+// Visual Type
+int GetVisualType() {
+    return visualType;
+}
+
+void SetVisualType(int type) {
+    visualType = type;
+    SaveSettingsToRegistry();
 }

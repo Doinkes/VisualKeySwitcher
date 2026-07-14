@@ -8,13 +8,12 @@ static int timerRunning = 0;
 // Функция для получения цвета в зависимости от раскладки
 COLORREF GetLayoutColor(HKL layout) {
     WORD langID = LOWORD(layout);
-    // RU -> голубой, EN -> оранжевый
     if (langID == 0x0419) {
         return RGB(74, 144, 217);  // Голубой
     } else if (langID == 0x0409) {
         return RGB(255, 107, 53);  // Оранжевый
     }
-    return RGB(255, 255, 255);     // Белый (по умолчанию)
+    return RGB(255, 255, 255);
 }
 
 LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -26,55 +25,79 @@ LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             RECT rect;
             GetClientRect(hwnd, &rect);
             
-            // Получаем ТЕКУЩУЮ раскладку
+            int visualType = GetVisualType();
             HKL layout = GetActiveWindowLayout();
             WORD langID = LOWORD(layout);
             
-            // ИНВЕРТИРУЕМ показ: если RU -> показываем EN, если EN -> показываем RU
+            // Определяем текст (инвертированный)
             char displayText[10];
             if (langID == 0x0419) {
-                sprintf(displayText, "EN");  // Русская -> показываем EN
+                sprintf(displayText, "EN");
             } else if (langID == 0x0409) {
-                sprintf(displayText, "RU");  // Английская -> показываем RU
+                sprintf(displayText, "RU");
             } else {
                 sprintf(displayText, "??");
             }
             
-            // Цвета тоже инвертируем
-            COLORREF bgColor;
-            if (langID == 0x0419) {
-                bgColor = RGB(255, 107, 53);  // Русская -> оранжевый (для EN)
-            } else if (langID == 0x0409) {
-                bgColor = RGB(74, 144, 217);  // Английская -> голубой (для RU)
+            if (visualType == 0) {
+                // CLASSIC: чёрный фон, белая рамка, белый текст
+                HBRUSH bgBrush = CreateSolidBrush(RGB(0, 0, 0));
+                FillRect(hdc, &rect, bgBrush);
+                DeleteObject(bgBrush);
+                
+                HPEN whitePen = CreatePen(PS_SOLID, 3, RGB(255, 255, 255));
+                SelectObject(hdc, whitePen);
+                SelectObject(hdc, GetStockObject(NULL_BRUSH));
+                Rectangle(hdc, 0, 0, rect.right, rect.bottom);
+                DeleteObject(whitePen);
+                
+                HFONT font = CreateFont(120, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+                    DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                    DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Arial");
+                SelectObject(hdc, font);
+                SetTextColor(hdc, RGB(255, 255, 255));
+                SetBkMode(hdc, TRANSPARENT);
+                
+                RECT textRect;
+                CopyRect(&textRect, &rect);
+                DrawTextA(hdc, displayText, -1, &textRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+                
+                DeleteObject(font);
             } else {
-                bgColor = RGB(255, 255, 255);
+                // MODERN: цветной фон, цветной текст
+                COLORREF bgColor;
+                if (langID == 0x0419) {
+                    bgColor = RGB(255, 107, 53);  // Русская -> оранжевый
+                } else if (langID == 0x0409) {
+                    bgColor = RGB(74, 144, 217);  // Английская -> голубой
+                } else {
+                    bgColor = RGB(255, 255, 255);
+                }
+                
+                HBRUSH bgBrush = CreateSolidBrush(bgColor);
+                FillRect(hdc, &rect, bgBrush);
+                DeleteObject(bgBrush);
+                
+                HPEN whitePen = CreatePen(PS_SOLID, 3, RGB(255, 255, 255));
+                SelectObject(hdc, whitePen);
+                SelectObject(hdc, GetStockObject(NULL_BRUSH));
+                Rectangle(hdc, 0, 0, rect.right, rect.bottom);
+                DeleteObject(whitePen);
+                
+                HFONT font = CreateFont(120, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+                    DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                    DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Arial");
+                SelectObject(hdc, font);
+                SetTextColor(hdc, RGB(255, 255, 255));
+                SetBkMode(hdc, TRANSPARENT);
+                
+                RECT textRect;
+                CopyRect(&textRect, &rect);
+                DrawTextA(hdc, displayText, -1, &textRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+                
+                DeleteObject(font);
             }
             
-            // Заливаем фон
-            HBRUSH bgBrush = CreateSolidBrush(bgColor);
-            FillRect(hdc, &rect, bgBrush);
-            DeleteObject(bgBrush);
-            
-            // Белая рамка
-            HPEN whitePen = CreatePen(PS_SOLID, 3, RGB(255, 255, 255));
-            SelectObject(hdc, whitePen);
-            SelectObject(hdc, GetStockObject(NULL_BRUSH));
-            Rectangle(hdc, 0, 0, rect.right, rect.bottom);
-            DeleteObject(whitePen);
-            
-            // Белый жирный текст
-            HFONT font = CreateFont(120, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
-                DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-                DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Arial");
-            SelectObject(hdc, font);
-            SetTextColor(hdc, RGB(255, 255, 255));
-            SetBkMode(hdc, TRANSPARENT);
-            
-            RECT textRect;
-            CopyRect(&textRect, &rect);
-            DrawTextA(hdc, displayText, -1, &textRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-            
-            DeleteObject(font);
             EndPaint(hwnd, &ps);
             return 0;
         }
@@ -94,6 +117,23 @@ LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 void ShowOverlay(HINSTANCE hInst) {
     if (!IsVisualMarkerEnabled()) return;
     
+    int visualType = GetVisualType();
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    int width = 200;
+    int height = 200;
+    int x, y;
+    
+    if (visualType == 0) {
+        // CLASSIC: по центру экрана
+        x = (screenWidth - width) / 2;
+        y = (screenHeight - height) / 2;
+    } else {
+        // MODERN: внизу, 80px от низа
+        x = (screenWidth - width) / 2;
+        y = screenHeight - height - 80;
+    }
+    
     if (!hwndOverlay) {
         WNDCLASSA wcOverlay = {0};
         wcOverlay.lpfnWndProc = OverlayWndProc;
@@ -105,14 +145,6 @@ void ShowOverlay(HINSTANCE hInst) {
         if (!RegisterClassA(&wcOverlay)) {
             return;
         }
-        
-        int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-        int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-        
-        int width = 200;
-        int height = 200;
-        int x = (screenWidth - width) / 2;
-        int y = screenHeight - height - 80;
         
         hwndOverlay = CreateWindowA("OverlayClass", "",
             WS_POPUP | WS_VISIBLE,
@@ -127,6 +159,9 @@ void ShowOverlay(HINSTANCE hInst) {
         SetWindowLong(hwndOverlay, GWL_EXSTYLE,
             GetWindowLong(hwndOverlay, GWL_EXSTYLE) | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_NOACTIVATE);
         SetLayeredWindowAttributes(hwndOverlay, 0, 255, LWA_ALPHA);
+    } else {
+        // Обновляем позицию
+        SetWindowPos(hwndOverlay, HWND_TOPMOST, x, y, width, height, SWP_SHOWWINDOW);
     }
     
     if (timerRunning) {
