@@ -129,7 +129,7 @@ void ShowOverlay(HINSTANCE hInst) {
     // ============================================================
     // НАСТРОЙКИ ТОЛЬКО ДЛЯ 3-ГО СТИЛЯ (SQUARES)
     // ============================================================
-    int margin = 40;           // Отступ 50px от левого и правого края
+    int margin = 40;           // Отступ 40px от левого и правого края
     int squareHeight = 80;     // Высота полоски
     // ============================================================
     
@@ -140,18 +140,16 @@ void ShowOverlay(HINSTANCE hInst) {
         x = (screenWidth - width) / 2;
         y = (screenHeight - height) / 2;
     } else if (visualType == 1) {
-        // MODERN: 200x200 внизу
+        // MODERN: 200x200 внизу (только Y поменялся)
         width = 200;
         height = 200;
         x = (screenWidth - width) / 2;
-        y = screenHeight - height - bottomOffset;
+        y = (screenHeight / 2) + (screenHeight / 4) - (height / 2);  // НОВАЯ ПОЗИЦИЯ
     } else {
-        // SQUARES: полоска на всю ширину с отступами 50px, в нижней половине экрана
-        width = screenWidth - (margin * 2);  // Ширина = экран - 100px
+        // SQUARES: полоска на всю ширину с отступами, в нижней половине экрана
+        width = screenWidth - (margin * 2);
         height = squareHeight;
         x = margin;
-        // Нижняя половина экрана: (screenHeight / 2) + (screenHeight / 4) - (height / 2)
-        // = середина нижней половины
         y = (screenHeight / 2) + (screenHeight / 4) - (height / 2);
     }
     
