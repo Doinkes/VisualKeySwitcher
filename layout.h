@@ -23,4 +23,9 @@ int IsHotkeyPressed(int vkCode);
 int GetVisualType();
 void SetVisualType(int type);
 
+// Sound Pack
+char* GetCurrentSoundPack();
+void SetSoundPack(const char* packName);
+void LoadSoundPacks();
+
 #endif

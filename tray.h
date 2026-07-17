@@ -3,6 +3,10 @@
 
 #include <windows.h>
 
+// Sound pack list from layout.c
+extern char soundPacksList[100][MAX_PATH];
+extern int soundPacksCount;
+
 void InitTray(HWND hwnd, HINSTANCE hInst);
 void UpdateTrayMenu(HWND hwnd);
 void DestroyTray();

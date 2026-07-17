@@ -14,6 +14,11 @@ static char exePath[MAX_PATH];
 static int hotkeyModifiers = 1 | 2; // Ctrl+Shift
 static int hotkeyKeyCode = 0;
 
+// Sound Pack
+static char currentSoundPack[MAX_PATH] = "default";
+char soundPacksList[100][MAX_PATH];
+int soundPacksCount = 0;
+
 static void GetFullPath(const char* filename, char* outPath) {
     strcpy(outPath, exeDir);
     strcat(outPath, "\\");
@@ -75,6 +80,7 @@ static void SaveSettingsToRegistry() {
         RegSetValueExA(hKey, "Sound", 0, REG_DWORD, (const BYTE*)&soundEnabled, sizeof(soundEnabled));
         RegSetValueExA(hKey, "Hotkey", 0, REG_DWORD, (const BYTE*)&hotkeyModifiers, sizeof(hotkeyModifiers));
         RegSetValueExA(hKey, "VisualType", 0, REG_DWORD, (const BYTE*)&visualType, sizeof(visualType));
+        RegSetValueExA(hKey, "SoundPack", 0, REG_SZ, (const BYTE*)currentSoundPack, strlen(currentSoundPack) + 1);
         
         RegCloseKey(hKey);
     }
@@ -105,7 +111,65 @@ static void LoadSettingsFromRegistry() {
             visualType = value;
         }
         
+        // Load SoundPack
+        DWORD dwTypeSZ = REG_SZ;
+        char packName[MAX_PATH];
+        DWORD sizeSZ = sizeof(packName);
+        if (RegQueryValueExA(hKey, "SoundPack", NULL, &dwTypeSZ, (LPBYTE)packName, &sizeSZ) == ERROR_SUCCESS) {
+            strcpy(currentSoundPack, packName);
+        }
+        
         RegCloseKey(hKey);
+    }
+}
+
+void LoadSoundPacks() {
+    soundPacksCount = 0;
+    char soundPackPath[MAX_PATH];
+    char searchPath[MAX_PATH];
+    GetFullPath("sound_pack", soundPackPath);
+    
+    sprintf(searchPath, "%s\\*", soundPackPath);
+    
+    WIN32_FIND_DATAA findData;
+    HANDLE hFind = FindFirstFileA(searchPath, &findData);
+    
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                if (strcmp(findData.cFileName, ".") != 0 && strcmp(findData.cFileName, "..") != 0) {
+                    // Check if this directory contains en.wav and ru.wav
+                    char enPath[MAX_PATH], ruPath[MAX_PATH];
+                    sprintf(enPath, "%s\\%s\\en.wav", soundPackPath, findData.cFileName);
+                    sprintf(ruPath, "%s\\%s\\ru.wav", soundPackPath, findData.cFileName);
+                    
+                    if (GetFileAttributesA(enPath) != INVALID_FILE_ATTRIBUTES &&
+                        GetFileAttributesA(ruPath) != INVALID_FILE_ATTRIBUTES) {
+                        strcpy(soundPacksList[soundPacksCount], findData.cFileName);
+                        soundPacksCount++;
+                    }
+                }
+            }
+        } while (FindNextFileA(hFind, &findData) && soundPacksCount < 100);
+        FindClose(hFind);
+    }
+    
+    // ≈сли есть звуковые пакеты и текущий пакет не установлен или равен "default"
+    if (soundPacksCount > 0) {
+        // ѕровер€ем, существует ли текущий пакет в списке
+        int packExists = 0;
+        for (int i = 0; i < soundPacksCount; i++) {
+            if (strcmp(currentSoundPack, soundPacksList[i]) == 0) {
+                packExists = 1;
+                break;
+            }
+        }
+        
+        // ≈сли пакет не существует или это "default", выбираем первый пакет
+        if (!packExists || strcmp(currentSoundPack, "default") == 0) {
+            strcpy(currentSoundPack, soundPacksList[0]);
+            SaveSettingsToRegistry(); // —охран€ем выбранный пакет
+        }
     }
 }
 
@@ -118,6 +182,7 @@ void InitLayout(HINSTANCE hInst) {
     }
     autoStartEnabled = IsAutoStartEnabledInternal();
     LoadSettingsFromRegistry();
+    LoadSoundPacks();
 }
 
 HKL GetActiveWindowLayout() {
@@ -143,17 +208,37 @@ void PlayLayoutSound(HKL layout) {
     
     char* lang = GetInvertedLanguageName(layout);
     char wavPath[MAX_PATH];
+    char soundPackDir[MAX_PATH];
     
-    if (strcmp(lang, "RU") == 0) {
-        GetFullPath("ru.wav", wavPath);
-    } else if (strcmp(lang, "EN") == 0) {
-        GetFullPath("en.wav", wavPath);
-    } else {
-        return;
-    }
+    GetFullPath("sound_pack", soundPackDir);
+    
+    // Use current sound pack
+    sprintf(wavPath, "%s\\%s\\%s.wav", soundPackDir, currentSoundPack, 
+            strcmp(lang, "RU") == 0 ? "ru" : 
+            strcmp(lang, "EN") == 0 ? "en" : "en");
     
     if (GetFileAttributesA(wavPath) == INVALID_FILE_ATTRIBUTES) {
-        return;
+        // Fallback to default sound pack
+        char defaultPath[MAX_PATH];
+        sprintf(defaultPath, "%s\\default\\%s.wav", soundPackDir,
+                strcmp(lang, "RU") == 0 ? "ru" : 
+                strcmp(lang, "EN") == 0 ? "en" : "en");
+                
+        if (GetFileAttributesA(defaultPath) != INVALID_FILE_ATTRIBUTES) {
+            strcpy(wavPath, defaultPath);
+        } else {
+            // Fallback to root directory (old behavior)
+            if (strcmp(lang, "RU") == 0) {
+                GetFullPath("ru.wav", wavPath);
+            } else if (strcmp(lang, "EN") == 0) {
+                GetFullPath("en.wav", wavPath);
+            } else {
+                return;
+            }
+            if (GetFileAttributesA(wavPath) == INVALID_FILE_ATTRIBUTES) {
+                return;
+            }
+        }
     }
     
     PlaySoundA(wavPath, NULL, SND_ASYNC | SND_FILENAME);
@@ -222,5 +307,15 @@ int GetVisualType() {
 
 void SetVisualType(int type) {
     visualType = type;
+    SaveSettingsToRegistry();
+}
+
+// Sound Pack
+char* GetCurrentSoundPack() {
+    return currentSoundPack;
+}
+
+void SetSoundPack(const char* packName) {
+    strcpy(currentSoundPack, packName);
     SaveSettingsToRegistry();
 }

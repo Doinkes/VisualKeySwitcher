@@ -13,6 +13,7 @@ void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
         HMENU hMenu = CreatePopupMenu();
         HMENU hHotkeyMenu = CreatePopupMenu();
         HMENU hVisualTypeMenu = CreatePopupMenu();
+        HMENU hSoundPackMenu = CreatePopupMenu();
         
         // Подменю для выбора хоткея
         AppendMenuA(hHotkeyMenu, MF_STRING, 10, "Ctrl + Shift");
@@ -39,6 +40,17 @@ void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
             CheckMenuItem(hVisualTypeMenu, 22, MF_BYCOMMAND | MF_CHECKED);
         }
         
+        // Подменю для выбора звукового пакета
+        char* currentPack = GetCurrentSoundPack();
+        for (int i = 0; i < soundPacksCount; i++) {
+            char menuText[MAX_PATH];
+            sprintf(menuText, "%s", soundPacksList[i]);
+            AppendMenuA(hSoundPackMenu, MF_STRING, 30 + i, menuText);
+            if (strcmp(currentPack, soundPacksList[i]) == 0) {
+                CheckMenuItem(hSoundPackMenu, 30 + i, MF_BYCOMMAND | MF_CHECKED);
+            }
+        }
+        
         // Основное меню
         AppendMenuA(hMenu, MF_STRING, 1, "Visual Marker");
         AppendMenuA(hMenu, MF_STRING, 2, "Sound");
@@ -46,6 +58,7 @@ void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
         
         AppendMenuA(hMenu, MF_SEPARATOR, 0, NULL);
         AppendMenuA(hMenu, MF_POPUP, (UINT_PTR)hVisualTypeMenu, "Visual Type");
+        AppendMenuA(hMenu, MF_POPUP, (UINT_PTR)hSoundPackMenu, "Sound Pack");
         
         AppendMenuA(hMenu, MF_SEPARATOR, 0, NULL);
         AppendMenuA(hMenu, MF_POPUP, (UINT_PTR)hHotkeyMenu, "Set Hotkey");
@@ -72,6 +85,7 @@ void HandleTrayMessage(WPARAM wParam, LPARAM lParam) {
         
         DestroyMenu(hHotkeyMenu);
         DestroyMenu(hVisualTypeMenu);
+        DestroyMenu(hSoundPackMenu);
         DestroyMenu(hMenu);
     }
 }
@@ -115,6 +129,13 @@ void HandleTrayCommand(WPARAM wParam) {
             DestroyWindow(hwndMain);
             PostQuitMessage(0);
             break;
+    }
+    
+    // Handle sound pack selection (30-129)
+    if (LOWORD(wParam) >= 30 && LOWORD(wParam) < 30 + soundPacksCount) {
+        int index = LOWORD(wParam) - 30;
+        SetSoundPack(soundPacksList[index]);
+        UpdateTrayMenu(hwndMain);
     }
 }
 
