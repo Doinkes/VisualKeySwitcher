@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "description": "Instant visual and audio keyboard layout indicator for Windows.",
+  "homepage": "https://github.com/Doinkes/VisualKeySwitcher",
+  "license": "MIT",
+  "url": "https://github.com/Doinkes/VisualKeySwitcher/releases/download/v1.0.0/VisualKeySwitcher-1.0.0.zip",
+  "hash": "bde3329a5f97f35d37e4b133e40778554b8bc2a868ae360bf40206cea50d39a6",
+  "extract_dir": "VisualKeySwitcher",
+  "shortcuts": [
+    [
+      "VisualKeySwitcher.exe",
+      "VisualKeySwitcher"
+    ]
+  ],
+  "checkver": {
+    "github": "https://github.com/Doinkes/VisualKeySwitcher",
+    "regex": "v([\\d.]+)"
+  },
+  "autoupdate": {
+    "url": "https://github.com/Doinkes/VisualKeySwitcher/releases/download/v$version/VisualKeySwitcher-$version.zip"
+  }
+}

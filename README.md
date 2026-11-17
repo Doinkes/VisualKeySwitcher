@@ -1,5 +1,7 @@
 # VisualKeySwitcher
 
+[English](README.en.md) | **Русский**
+
 [![Build](https://github.com/Doinkes/VisualKeySwitcher/actions/workflows/build.yml/badge.svg)](https://github.com/Doinkes/VisualKeySwitcher/actions/workflows/build.yml)
 
 Индикатор и звуковое сопровождение при переключении раскладки клавиатуры.
@@ -12,10 +14,16 @@ Windows 10/11, x64.
 в заблуждение: если язык не сменился, вы увидите фактический язык и красную
 рамку, а не «успешное» переключение.
 
+<p align="center">
+  <img src="docs/demo.gif" width="400" alt="Демо: индикатор раскладки">
+</p>
+
 ## Скачать
 
 Готовая сборка: **[GitHub Releases](https://github.com/Doinkes/VisualKeySwitcher/releases/latest)**.
-Скачайте `VisualKeySwitcher.zip`, распакуйте и запустите exe.
+Скачайте архив из релиза, распакуйте и запустите exe.
+
+Сайт: **[doinkes.github.io/VisualKeySwitcher](https://doinkes.github.io/VisualKeySwitcher/)**
 
 ## Возможности
 
@@ -137,6 +145,12 @@ cargo build --release
 обновит `Release\VisualKeySwitcher.exe`, если эта папка есть.
 
 `Release` и `target` — локальные папки сборки, в git они не входят.
+
+## Лицензия
+
+MIT — можно использовать, изменять и распространять, в том числе коммерчески,
+при условии сохранения уведомления об авторстве и текста лицензии.
+Подробнее — [LICENSE](LICENSE).
 
 ---
 

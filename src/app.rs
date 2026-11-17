@@ -747,6 +747,7 @@ pub fn run() -> i32 {
         return 0;
     }
 
+    let first_run = !cfg_path.is_file();
     let mut cfg = Config::load_or_migrate(&cfg_path);
     util::set_debug(cfg.debug);
     if validate_hotkey(&mut cfg) {
@@ -858,6 +859,20 @@ pub fn run() -> i32 {
             if let Some(t) = app.tray.as_mut() {
                 t.balloon("VisualKeySwitcher", text, win::NIIF_WARNING);
             }
+        }
+
+        if first_run && !want_settings {
+            let hint = format!(
+                "Работает в трее. Нажмите {} для смены языка. Настройки — правый клик по иконке.",
+                util::format_hotkey(app.cfg.hotkey_mods, app.cfg.hotkey_vk)
+            );
+            if let Some(t) = app.tray.as_mut() {
+                t.balloon("VisualKeySwitcher", &hint, win::NIIF_INFO);
+            }
+            util::log(&format!(
+                "Первый запуск: показана подсказка в трее ({})",
+                hint
+            ));
         }
 
         if !hook::install() {

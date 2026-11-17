@@ -1,0 +1,25 @@
+PackageIdentifier: Doinkes.VisualKeySwitcher
+PackageVersion: 1.0.0
+PackageLocale: en-US
+Publisher: Doinkes
+PublisherUrl: https://github.com/Doinkes
+PublisherSupportUrl: https://github.com/Doinkes/VisualKeySwitcher/issues
+PackageName: VisualKeySwitcher
+PackageUrl: https://github.com/Doinkes/VisualKeySwitcher
+License: MIT
+LicenseUrl: https://github.com/Doinkes/VisualKeySwitcher/blob/main/LICENSE
+Copyright: Copyright (c) 2026 Doinkes
+ShortDescription: Instant visual and audio keyboard layout indicator for Windows.
+Description: A tray utility that shows and voices keyboard layout changes, supports custom hotkeys (including modifier-only chords), and verifies that the layout actually changed. Windows 10/11 x64. No internet access and no telemetry.
+Moniker: visualkeyswitcher
+Tags:
+  - keyboard
+  - layout
+  - language
+  - switcher
+  - tray
+  - productivity
+  - windows
+ReleaseNotesUrl: https://github.com/Doinkes/VisualKeySwitcher/releases/tag/v1.0.0
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0
