@@ -1,5 +1,7 @@
 # VisualKeySwitcher
 
+[![Build](https://github.com/Doinkes/VisualKeySwitcher/actions/workflows/build.yml/badge.svg)](https://github.com/Doinkes/VisualKeySwitcher/actions/workflows/build.yml)
+
 Индикатор и звуковое сопровождение при переключении раскладки клавиатуры.
 Windows 10/11, x64.
 
@@ -9,6 +11,11 @@ Windows 10/11, x64.
 смену раскладки. Работает с вашим собственным сочетанием клавиш и не вводит
 в заблуждение: если язык не сменился, вы увидите фактический язык и красную
 рамку, а не «успешное» переключение.
+
+## Скачать
+
+Готовая сборка: **[GitHub Releases](https://github.com/Doinkes/VisualKeySwitcher/releases/latest)**.
+Скачайте `VisualKeySwitcher.zip`, распакуйте и запустите exe.
 
 ## Возможности
 
@@ -23,6 +30,13 @@ Windows 10/11, x64.
 - Можно отключить встроенные сочетания Windows, чтобы язык переключала
   только программа. После выхода настройки Windows возвращаются.
 - Работа в трее, автозапуск, настройки, один экземпляр.
+
+## Скриншоты
+
+<p align="center">
+  <img src="docs/settings.png" width="420" alt="Настройки">
+  <img src="docs/overlay.png" width="140" alt="Индикатор">
+</p>
 
 ## Запуск
 
