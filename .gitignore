@@ -1,2 +1,16 @@
-VisualKeySwitcher.exe
-compile.bat
+# Rust build output
+/target
+
+# Local distribution folder (built artifact, not part of the source)
+/Release
+
+# Binaries
+*.exe
+*.pdb
+
+# Legacy local copy
+/VisualKeySwitcher
+
+# IDE
+/.vs
+/.vscode
